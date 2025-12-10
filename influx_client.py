@@ -22,6 +22,7 @@ class HealthInfluxClient:
         self._client: Optional[InfluxDBClient] = None
         self._write_api = None
         self._query_api = None
+        self._org_id: Optional[str] = None
 
     def connect(self):
         """Establish connection to InfluxDB"""
@@ -29,6 +30,15 @@ class HealthInfluxClient:
             url=self.config.url,
             token=self.config.token,
         )
+
+        # Get org_id (required for writes)
+        orgs = self._client.organizations_api().find_organizations()
+        if orgs:
+            self._org_id = orgs[0].id
+            logger.info(f"Using organization: {orgs[0].name} ({self._org_id})")
+        else:
+            raise RuntimeError("No organization found in InfluxDB")
+
         # Use batching for better performance
         self._write_api = self._client.write_api(write_options=WriteOptions(
             batch_size=5000,
@@ -67,17 +77,10 @@ class HealthInfluxClient:
         """Create bucket if it doesn't exist"""
         buckets_api = self._client.buckets_api()
 
-        # Check if bucket exists
         bucket = buckets_api.find_bucket_by_name(self.config.bucket)
         if bucket is None:
             logger.info(f"Creating bucket: {self.config.bucket}")
-            # InfluxDB 2.x always has at least one org - find it
-            orgs = self._client.organizations_api().find_organizations()
-            if not orgs:
-                raise RuntimeError("No organization found in InfluxDB. Create bucket manually.")
-            org_id = orgs[0].id
-            logger.info(f"Using organization: {orgs[0].name} ({org_id})")
-            buckets_api.create_bucket(bucket_name=self.config.bucket, org_id=org_id)
+            buckets_api.create_bucket(bucket_name=self.config.bucket, org_id=self._org_id)
         else:
             logger.info(f"Bucket exists: {self.config.bucket}")
 
@@ -91,7 +94,7 @@ class HealthInfluxClient:
             .field("value", float(sample.value))
             .time(sample.timestamp)
         )
-        self._write_api.write(bucket=self.config.bucket, record=point)
+        self._write_api.write(bucket=self.config.bucket, org=self._org_id, record=point)
 
     def write_metrics_batch(self, samples: Iterator[HealthMetricSample],
                            progress_callback=None) -> int:
@@ -121,14 +124,14 @@ class HealthInfluxClient:
 
             # Write in batches
             if len(points) >= 5000:
-                self._write_api.write(bucket=self.config.bucket, record=points)
+                self._write_api.write(bucket=self.config.bucket, org=self._org_id, record=points)
                 points = []
                 if progress_callback:
                     progress_callback(count)
 
         # Write remaining points
         if points:
-            self._write_api.write(bucket=self.config.bucket, record=points)
+            self._write_api.write(bucket=self.config.bucket, org=self._org_id, record=points)
             if progress_callback:
                 progress_callback(count)
 
@@ -159,7 +162,7 @@ class HealthInfluxClient:
         if workout.min_heart_rate is not None:
             point.field("min_heart_rate", workout.min_heart_rate)
 
-        self._write_api.write(bucket=self.config.bucket, record=point)
+        self._write_api.write(bucket=self.config.bucket, org=self._org_id, record=point)
 
         # Write heart rate time series for workout
         hr_points = []
@@ -175,7 +178,7 @@ class HealthInfluxClient:
                 hr_points.append(hr_point)
 
         if hr_points:
-            self._write_api.write(bucket=self.config.bucket, record=hr_points)
+            self._write_api.write(bucket=self.config.bucket, org=self._org_id, record=hr_points)
 
     def write_workouts_batch(self, workouts: Iterator[Workout],
                             progress_callback=None) -> int:
@@ -202,7 +205,7 @@ class HealthInfluxClient:
             .field("max", agg.max_value)
             .time(agg.timestamp)
         )
-        self._write_api.write(bucket=self.config.bucket, record=point)
+        self._write_api.write(bucket=self.config.bucket, org=self._org_id, record=point)
 
     def write_aggregated_batch(self, aggregates: Iterator[AggregatedMetric],
                                measurement: str = "health_metrics_hourly",
@@ -227,13 +230,13 @@ class HealthInfluxClient:
             count += 1
 
             if len(points) >= 5000:
-                self._write_api.write(bucket=self.config.bucket, record=points)
+                self._write_api.write(bucket=self.config.bucket, org=self._org_id, record=points)
                 points = []
                 if progress_callback:
                     progress_callback(count)
 
         if points:
-            self._write_api.write(bucket=self.config.bucket, record=points)
+            self._write_api.write(bucket=self.config.bucket, org=self._org_id, record=points)
             if progress_callback:
                 progress_callback(count)
 
@@ -259,7 +262,7 @@ class HealthInfluxClient:
             |> filter(fn: (r) => r._field == "value")
         '''
 
-        result = self._query_api.query(query)
+        result = self._query_api.query(query, org=self._org_id)
         records = []
         for table in result:
             for record in table.records:
@@ -280,7 +283,7 @@ class HealthInfluxClient:
             |> filter(fn: (r) => r.metric == "{metric_name}")
         '''
 
-        result = self._query_api.query(query)
+        result = self._query_api.query(query, org=self._org_id)
         records = []
         for table in result:
             for record in table.records:
@@ -309,7 +312,7 @@ class HealthInfluxClient:
             |> last()
         '''
 
-        result = self._query_api.query(query)
+        result = self._query_api.query(query, org=self._org_id)
         for table in result:
             for record in table.records:
                 return record.get_time()
@@ -331,5 +334,6 @@ class HealthInfluxClient:
             stop=stop,
             predicate=predicate,
             bucket=self.config.bucket,
+            org=self._org_id,
         )
         logger.info(f"Deleted data from {start} to {stop}")
