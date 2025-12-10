@@ -28,7 +28,6 @@ class HealthInfluxClient:
         self._client = InfluxDBClient(
             url=self.config.url,
             token=self.config.token,
-            org=self.config.org,
         )
         # Use batching for better performance
         self._write_api = self._client.write_api(write_options=WriteOptions(
@@ -72,10 +71,7 @@ class HealthInfluxClient:
         bucket = buckets_api.find_bucket_by_name(self.config.bucket)
         if bucket is None:
             logger.info(f"Creating bucket: {self.config.bucket}")
-            buckets_api.create_bucket(
-                bucket_name=self.config.bucket,
-                org=self.config.org,
-            )
+            buckets_api.create_bucket(bucket_name=self.config.bucket)
         else:
             logger.info(f"Bucket exists: {self.config.bucket}")
 
@@ -329,6 +325,5 @@ class HealthInfluxClient:
             stop=stop,
             predicate=predicate,
             bucket=self.config.bucket,
-            org=self.config.org,
         )
         logger.info(f"Deleted data from {start} to {stop}")

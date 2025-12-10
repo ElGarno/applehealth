@@ -172,11 +172,6 @@ def main():
         help="InfluxDB token (default: from INFLUXDB_TOKEN env var)",
     )
     parser.add_argument(
-        "--org",
-        type=str,
-        help="InfluxDB organization (default: from INFLUXDB_ORG env var)",
-    )
-    parser.add_argument(
         "--bucket",
         type=str,
         help="InfluxDB bucket (default: from INFLUXDB_BUCKET env var)",
@@ -197,8 +192,6 @@ def main():
         config.influxdb.url = args.url
     if args.token:
         config.influxdb.token = args.token
-    if args.org:
-        config.influxdb.org = args.org
     if args.bucket:
         config.influxdb.bucket = args.bucket
 
