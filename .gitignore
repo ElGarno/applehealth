@@ -1,0 +1,22 @@
+# Environment files with secrets
+.env
+
+# Data exports (large files)
+data_export/
+*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.uv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store

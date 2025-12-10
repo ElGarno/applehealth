@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # One-time import service - run manually via Portainer
+  apple_health_import:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    container_name: apple_health_import
+    environment:
+      - INFLUXDB_URL=${INFLUXDB_URL:-http://192.168.178.114:8088}
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET:-apple_health}
+    volumes:
+      # Mount the data export directory from NAS
+      # Adjust the path to where you store the JSON exports on your Synology
+      - /volume1/docker/apple_health/data:/data:ro
+    networks:
+      - default
+    # Run import with aggregates only (skip raw for space efficiency)
+    # Change to include --no-raw if you want to skip raw per-second data
+    command: >
+      uv run python ingest.py /data/HealthAutoExport-20241201-20251210.json
+    restart: "no"
+
+  # REST API server for automatic imports from Health Auto Export app
+  # Uncomment when ready for automated imports
+  # apple_health_api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   platform: linux/amd64
+  #   container_name: apple_health_api
+  #   environment:
+  #     - INFLUXDB_URL=${INFLUXDB_URL:-http://192.168.178.114:8086}
+  #     - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+  #     - INFLUXDB_ORG=${INFLUXDB_ORG:-home}
+  #     - INFLUXDB_BUCKET=${INFLUXDB_BUCKET:-apple_health}
+  #   volumes:
+  #     - /volume1/docker/apple_health/data:/data
+  #   ports:
+  #     - "8090:8090"
+  #   networks:
+  #     - default
+  #   command: uv run python api_server.py
+  #   restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge

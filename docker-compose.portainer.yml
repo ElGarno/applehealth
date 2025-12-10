@@ -1,0 +1,37 @@
+version: '3.8'
+
+# Deploy via Portainer Stacks
+# 1. Create new stack in Portainer
+# 2. Paste this file content or reference Git repo
+# 3. Set environment variables in Portainer UI
+# 4. Deploy
+
+services:
+  apple_health_import:
+    image: ghcr.io/elgarno/applehealth:latest  # Or build locally
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    container_name: apple_health_import
+    environment:
+      - INFLUXDB_URL=${INFLUXDB_URL}
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
+    volumes:
+      # Adjust path to your Synology docker volume
+      - /volume1/docker/apple_health/data:/data:ro
+    networks:
+      - default
+    # Default: import with all data (raw + hourly + daily)
+    # For space efficiency, add --no-raw to skip per-second data
+    command: >
+      uv run python ingest.py /data/HealthAutoExport-20241201-20251210.json
+    restart: "no"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+networks:
+  default:
+    driver: bridge
