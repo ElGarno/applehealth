@@ -3,7 +3,7 @@
 
 # Data exports (large files)
 data_export/
-*.json
+# *.json
 
 # Python
 __pycache__/
