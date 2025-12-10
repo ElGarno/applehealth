@@ -178,7 +178,7 @@ class HealthInfluxClient:
                     Point("workout_heart_rate")
                     .tag("workout_id", workout.workout_id)
                     .tag("workout_name", workout.name)
-                    .field("heart_rate", sample.heart_rate)
+                    .field("heart_rate", float(sample.heart_rate))
                     .time(sample.timestamp)
                 )
                 hr_points.append(hr_point)
