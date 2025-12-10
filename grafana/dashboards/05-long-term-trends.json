@@ -10,7 +10,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -45,7 +45,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: -365d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"weight_body_mass\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> last()",
           "refId": "A"
         }
@@ -56,7 +56,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -93,7 +93,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: -365d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"vo2_max\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> last()",
           "refId": "A"
         }
@@ -104,7 +104,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -141,7 +141,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: -365d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"body_mass_index\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> last()",
           "refId": "A"
         }
@@ -152,7 +152,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -187,7 +187,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: -365d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"body_fat_percentage\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> last()\n  |> map(fn: (r) => ({ r with _value: r._value * 100.0 }))",
           "refId": "A"
         }
@@ -198,7 +198,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -241,7 +241,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"weight_body_mass\")\n  |> filter(fn: (r) => r._field == \"value\")",
           "refId": "A"
         }
@@ -252,7 +252,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -295,7 +295,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"vo2_max\")\n  |> filter(fn: (r) => r._field == \"value\")",
           "refId": "A"
         }
@@ -306,7 +306,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -352,7 +352,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"health_metrics_daily\")\n  |> filter(fn: (r) => r.metric == \"step_count\")\n  |> filter(fn: (r) => r._field == \"sum\")",
           "refId": "A"
         }
@@ -363,7 +363,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -406,7 +406,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"resting_heart_rate\")\n  |> filter(fn: (r) => r._field == \"value\")",
           "refId": "A"
         }
@@ -417,7 +417,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -460,7 +460,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"health_metrics_daily\")\n  |> filter(fn: (r) => r.metric == \"walking_speed\")\n  |> filter(fn: (r) => r._field == \"avg\")",
           "refId": "A"
         }

@@ -10,7 +10,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -47,7 +47,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: today())\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"step_count\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> sum()",
           "refId": "A"
         }
@@ -58,7 +58,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -95,7 +95,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: today())\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"walking_running_distance\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> sum()",
           "refId": "A"
         }
@@ -106,7 +106,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -143,7 +143,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: today())\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"active_energy\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> sum()",
           "refId": "A"
         }
@@ -154,7 +154,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -191,7 +191,7 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: today())\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"apple_exercise_time\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> sum()",
           "refId": "A"
         }
@@ -202,7 +202,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -245,7 +245,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics_daily\")\n  |> filter(fn: (r) => r.metric == \"step_count\")\n  |> filter(fn: (r) => r._field == \"sum\")\n  |> aggregateWindow(every: 1d, fn: sum, createEmpty: false)",
           "refId": "A"
         }
@@ -256,7 +256,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -299,7 +299,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics_daily\")\n  |> filter(fn: (r) => r.metric == \"walking_running_distance\")\n  |> filter(fn: (r) => r._field == \"sum\")\n  |> aggregateWindow(every: 1d, fn: sum, createEmpty: false)",
           "refId": "A"
         }
@@ -310,7 +310,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -353,7 +353,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics_daily\")\n  |> filter(fn: (r) => r.metric == \"flights_climbed\")\n  |> filter(fn: (r) => r._field == \"sum\")\n  |> aggregateWindow(every: 1d, fn: sum, createEmpty: false)",
           "refId": "A"
         }
@@ -364,7 +364,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "influxdb-applehealth"
+        "uid": "af6pid1r7xp1cf"
       },
       "fieldConfig": {
         "defaults": {
@@ -407,7 +407,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "influxdb", "uid": "influxdb-applehealth" },
+          "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
           "query": "from(bucket: \"apple_health\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics_daily\")\n  |> filter(fn: (r) => r.metric == \"active_energy\")\n  |> filter(fn: (r) => r._field == \"sum\")\n  |> aggregateWindow(every: 1d, fn: sum, createEmpty: false)",
           "refId": "A"
         }
