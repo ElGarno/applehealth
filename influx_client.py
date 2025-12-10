@@ -145,28 +145,28 @@ class HealthInfluxClient:
 
     def write_workout(self, workout: Workout):
         """Write a workout summary"""
-        # Main workout point
+        # Main workout point - ensure all numeric fields are floats for consistency
         point = (
             Point("workouts")
             .tag("workout_id", workout.workout_id)
             .tag("name", workout.name)
             .tag("location", workout.location or "unknown")
-            .field("duration", workout.duration_seconds)
+            .field("duration", float(workout.duration_seconds))
             .time(workout.start_time)
         )
 
         if workout.total_distance is not None:
-            point.field("distance", workout.total_distance)
+            point.field("distance", float(workout.total_distance))
         if workout.total_active_energy is not None:
-            point.field("active_energy", workout.total_active_energy)
+            point.field("active_energy", float(workout.total_active_energy))
         if workout.total_steps is not None:
             point.field("step_count", float(workout.total_steps))
         if workout.avg_heart_rate is not None:
-            point.field("avg_heart_rate", workout.avg_heart_rate)
+            point.field("avg_heart_rate", float(workout.avg_heart_rate))
         if workout.max_heart_rate is not None:
-            point.field("max_heart_rate", workout.max_heart_rate)
+            point.field("max_heart_rate", float(workout.max_heart_rate))
         if workout.min_heart_rate is not None:
-            point.field("min_heart_rate", workout.min_heart_rate)
+            point.field("min_heart_rate", float(workout.min_heart_rate))
 
         self._write_api.write(bucket=self.config.bucket, org=self._org_id, record=point)
 
