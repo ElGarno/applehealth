@@ -73,11 +73,17 @@ class HealthInfluxClient:
             logger.error(f"Health check failed: {e}")
             return False
 
-    def ensure_bucket_exists(self):
-        """Create bucket if it doesn't exist"""
+    def ensure_bucket_exists(self, clean: bool = False):
+        """Create bucket if it doesn't exist, optionally delete and recreate"""
         buckets_api = self._client.buckets_api()
 
         bucket = buckets_api.find_bucket_by_name(self.config.bucket)
+
+        if bucket is not None and clean:
+            logger.info(f"Deleting existing bucket: {self.config.bucket}")
+            buckets_api.delete_bucket(bucket)
+            bucket = None
+
         if bucket is None:
             logger.info(f"Creating bucket: {self.config.bucket}")
             buckets_api.create_bucket(bucket_name=self.config.bucket, org_id=self._org_id)

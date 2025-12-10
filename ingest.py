@@ -162,6 +162,11 @@ def main():
         help="Skip writing daily aggregates",
     )
     parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Delete and recreate the bucket before importing (fixes type conflicts)",
+    )
+    parser.add_argument(
         "--url",
         type=str,
         help="InfluxDB URL (default: from INFLUXDB_URL env var)",
@@ -235,7 +240,7 @@ def main():
             sys.exit(1)
 
         logger.info("Connected to InfluxDB")
-        client.ensure_bucket_exists()
+        client.ensure_bucket_exists(clean=args.clean)
 
         start_time = datetime.now()
         stats = ingest_file(

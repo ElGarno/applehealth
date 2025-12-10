@@ -54,7 +54,9 @@ def parse_metrics(data: dict) -> Iterator[HealthMetricSample]:
         unit = metric.get("units", "")
 
         for sample in metric.get("data", []):
-            timestamp = parse_timestamp(sample.get("date", ""))
+            # Try 'date' first, then 'start' (different export formats)
+            date_str = sample.get("date") or sample.get("start", "")
+            timestamp = parse_timestamp(date_str)
             if timestamp is None:
                 continue
 
@@ -65,7 +67,8 @@ def parse_metrics(data: dict) -> Iterator[HealthMetricSample]:
             if value is None:
                 continue
 
-            source = sample.get("source", "")
+            # Source can be 'source' or 'sources'
+            source = sample.get("source") or sample.get("sources", "")
 
             yield HealthMetricSample(
                 metric_name=metric_name,
