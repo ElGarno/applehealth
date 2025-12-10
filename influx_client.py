@@ -71,7 +71,13 @@ class HealthInfluxClient:
         bucket = buckets_api.find_bucket_by_name(self.config.bucket)
         if bucket is None:
             logger.info(f"Creating bucket: {self.config.bucket}")
-            buckets_api.create_bucket(bucket_name=self.config.bucket)
+            # InfluxDB 2.x always has at least one org - find it
+            orgs = self._client.organizations_api().find_organizations()
+            if not orgs:
+                raise RuntimeError("No organization found in InfluxDB. Create bucket manually.")
+            org_id = orgs[0].id
+            logger.info(f"Using organization: {orgs[0].name} ({org_id})")
+            buckets_api.create_bucket(bucket_name=self.config.bucket, org_id=org_id)
         else:
             logger.info(f"Bucket exists: {self.config.bucket}")
 
