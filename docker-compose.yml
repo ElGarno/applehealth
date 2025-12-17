@@ -14,7 +14,9 @@ services:
       - INFLUXDB_BUCKET=${INFLUXDB_BUCKET:-apple_health}
     volumes:
       - /volume1/docker/apple_health/data:/data:ro
-    command: python ingest.py /data/HealthAutoExport-20251210-20251217.json --incremental
+    command: >
+      sh -c "python ingest.py /data/HealthAutoExport-20241201-20251210.json --clean &&
+             python ingest.py /data/HealthAutoExport-20251210-20251217.json --incremental"
     restart: "no"
 
 networks:

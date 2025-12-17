@@ -53,6 +53,11 @@ class HealthInfluxClient:
     def close(self):
         """Close connection"""
         if self._write_api:
+            # Ensure all pending writes are flushed before closing
+            try:
+                self._write_api.flush()
+            except Exception as e:
+                logger.warning(f"Error flushing write buffer: {e}")
             self._write_api.close()
         if self._client:
             self._client.close()
