@@ -4,16 +4,18 @@ Main ingestion script for Apple Health data
 
 Usage:
     uv run ingest.py <json_file> [--dry-run] [--no-raw] [--no-hourly] [--no-daily]
+    uv run ingest.py <json_file> --incremental  # Only import new data
 
 Example:
     uv run ingest.py data_export/HealthAutoExport-20241201-20251210.json
+    uv run ingest.py data_export/HealthAutoExport-20251210-20251217.json --incremental
 """
 import argparse
 import logging
 import os
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from config import get_config
 from parser import HealthDataParser
@@ -39,6 +41,7 @@ def ingest_file(
     write_hourly: bool = True,
     write_daily: bool = True,
     dry_run: bool = False,
+    since: datetime = None,
 ) -> dict:
     """Ingest a Health Auto Export JSON file into InfluxDB
 
@@ -49,6 +52,7 @@ def ingest_file(
         write_hourly: Write hourly aggregates
         write_daily: Write daily aggregates
         dry_run: If True, parse but don't write to DB
+        since: Only import data after this timestamp (for incremental imports)
 
     Returns:
         Dictionary with statistics about the ingestion
@@ -59,13 +63,18 @@ def ingest_file(
         "hourly_aggregates": 0,
         "daily_aggregates": 0,
         "workouts": 0,
+        "skipped_metrics": 0,
+        "skipped_workouts": 0,
         "errors": [],
     }
 
     logger.info(f"Loading {file_path}...")
-    parser = HealthDataParser(file_path)
+    parser = HealthDataParser(file_path, since=since)
     summary = parser.get_summary()
-    logger.info(f"Found {summary['total_metric_samples']:,} metric samples, {summary['total_workouts']} workouts")
+    logger.info(f"Found {summary['total_metric_samples']:,} metric samples, {summary['total_workouts']} workouts in file")
+
+    if since:
+        logger.info(f"Incremental mode: only importing data after {since}")
 
     # Initialize streaming aggregator
     aggregator = StreamingAggregator()
@@ -90,7 +99,8 @@ def ingest_file(
 
         print()  # New line after progress
         stats["raw_metrics"] = count
-        logger.info(f"Processed {count:,} raw metrics")
+        stats["skipped_metrics"] = summary['total_metric_samples'] - count
+        logger.info(f"Processed {count:,} raw metrics" + (f" (skipped {stats['skipped_metrics']:,} already imported)" if since else ""))
 
     # Write hourly aggregates
     if write_hourly and not dry_run:
@@ -127,7 +137,8 @@ def ingest_file(
         workout_count += 1
 
     stats["workouts"] = workout_count
-    logger.info(f"Processed {workout_count} workouts")
+    stats["skipped_workouts"] = summary['total_workouts'] - workout_count
+    logger.info(f"Processed {workout_count} workouts" + (f" (skipped {stats['skipped_workouts']} already imported)" if since else ""))
 
     return stats
 
@@ -165,6 +176,16 @@ def main():
         "--clean",
         action="store_true",
         help="Delete and recreate the bucket before importing (fixes type conflicts)",
+    )
+    parser.add_argument(
+        "--incremental",
+        action="store_true",
+        help="Only import data newer than the last imported timestamp (skips duplicates)",
+    )
+    parser.add_argument(
+        "--since",
+        type=str,
+        help="Only import data after this timestamp (format: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS)",
     )
     parser.add_argument(
         "--url",
@@ -231,6 +252,20 @@ def main():
 
         return
 
+    # Parse --since timestamp if provided
+    since_timestamp = None
+    if args.since:
+        try:
+            # Try full datetime format first
+            since_timestamp = datetime.fromisoformat(args.since)
+        except ValueError:
+            try:
+                # Try date-only format
+                since_timestamp = datetime.strptime(args.since, "%Y-%m-%d")
+            except ValueError:
+                logger.error(f"Invalid --since format: {args.since}. Use YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS")
+                sys.exit(1)
+
     # Connect and ingest
     logger.info(f"Connecting to InfluxDB at {config.influxdb.url}...")
 
@@ -242,6 +277,29 @@ def main():
         logger.info("Connected to InfluxDB")
         client.ensure_bucket_exists(clean=args.clean)
 
+        # Handle incremental mode
+        if args.incremental:
+            if since_timestamp:
+                logger.warning("Both --incremental and --since specified. Using --since value.")
+            else:
+                # Query the last import time from the database
+                last_times = client.get_last_import_times()
+                since_timestamp = last_times.get("raw")
+
+                if since_timestamp:
+                    logger.info(f"Incremental mode: last import was at {since_timestamp}")
+                    # Delete overlapping aggregates to prevent double-counting
+                    # We delete from the start of the hour containing the cutoff
+                    cutoff_hour = since_timestamp.replace(minute=0, second=0, microsecond=0)
+                    logger.info(f"Deleting hourly aggregates after {cutoff_hour} to prevent double-counting...")
+                    client.delete_data_after(cutoff_hour, "health_metrics_hourly")
+
+                    cutoff_day = since_timestamp.replace(hour=0, minute=0, second=0, microsecond=0)
+                    logger.info(f"Deleting daily aggregates after {cutoff_day} to prevent double-counting...")
+                    client.delete_data_after(cutoff_day, "health_metrics_daily")
+                else:
+                    logger.info("No existing data found. Performing full import.")
+
         start_time = datetime.now()
         stats = ingest_file(
             file_path=args.file,
@@ -250,6 +308,7 @@ def main():
             write_hourly=not args.no_hourly,
             write_daily=not args.no_daily,
             dry_run=args.dry_run,
+            since=since_timestamp,
         )
         elapsed = datetime.now() - start_time
 
@@ -258,9 +317,13 @@ def main():
     logger.info("Ingestion complete!")
     logger.info(f"  File: {stats['file']}")
     logger.info(f"  Raw metrics: {stats['raw_metrics']:,}")
+    if stats.get('skipped_metrics'):
+        logger.info(f"  Skipped metrics (already imported): {stats['skipped_metrics']:,}")
     logger.info(f"  Hourly aggregates: {stats['hourly_aggregates']:,}")
     logger.info(f"  Daily aggregates: {stats['daily_aggregates']:,}")
     logger.info(f"  Workouts: {stats['workouts']}")
+    if stats.get('skipped_workouts'):
+        logger.info(f"  Skipped workouts (already imported): {stats['skipped_workouts']}")
     logger.info(f"  Time elapsed: {elapsed}")
 
 

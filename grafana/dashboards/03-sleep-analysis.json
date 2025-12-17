@@ -48,7 +48,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
-          "query": "from(bucket: \"apple_health\")\n  |> range(start: -2d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"sleep_analysis\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> last()",
+          "query": "from(bucket: \"apple_health\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"sleep_analysis\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> last()",
           "refId": "A"
         }
       ],
@@ -96,7 +96,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
-          "query": "from(bucket: \"apple_health\")\n  |> range(start: -2d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"respiratory_rate\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> last()",
+          "query": "from(bucket: \"apple_health\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"respiratory_rate\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> last()",
           "refId": "A"
         }
       ],
@@ -144,7 +144,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
-          "query": "from(bucket: \"apple_health\")\n  |> range(start: -2d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"breathing_disturbances\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> last()",
+          "query": "from(bucket: \"apple_health\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"breathing_disturbances\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> last()",
           "refId": "A"
         }
       ],
@@ -201,7 +201,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
-          "query": "from(bucket: \"apple_health\")\n  |> range(start: -30d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"sleep_analysis\")\n  |> filter(fn: (r) => r._field == \"value\")",
+          "query": "from(bucket: \"apple_health\")\n  |> range(start: -30d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics_daily\")\n  |> filter(fn: (r) => r.metric == \"sleep_analysis\")\n  |> filter(fn: (r) => r._field == \"sum\")",
           "refId": "A"
         }
       ],

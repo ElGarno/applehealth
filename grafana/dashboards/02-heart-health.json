@@ -192,7 +192,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
-          "query": "from(bucket: \"apple_health\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"blood_oxygen_saturation\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> last()\n  |> map(fn: (r) => ({ r with _value: r._value * 100.0 }))",
+          "query": "from(bucket: \"apple_health\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"blood_oxygen_saturation\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> last()",
           "refId": "A"
         }
       ],
@@ -246,7 +246,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
-          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"health_metrics\")\n  |> filter(fn: (r) => r.metric == \"heart_rate\")\n  |> filter(fn: (r) => r._field == \"value\")\n  |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)",
+          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workout_heart_rate\")\n  |> filter(fn: (r) => r._field == \"heart_rate\")\n  |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)",
           "refId": "A"
         }
       ],

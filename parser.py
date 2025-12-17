@@ -201,8 +201,15 @@ def load_and_parse(file_path: Path) -> tuple[list[HealthMetricSample], list[Work
 class HealthDataParser:
     """Streaming parser for large Health Auto Export files"""
 
-    def __init__(self, file_path: Path):
+    def __init__(self, file_path: Path, since: Optional[datetime] = None):
+        """Initialize parser
+
+        Args:
+            file_path: Path to Health Auto Export JSON file
+            since: Optional cutoff timestamp - only return samples after this time
+        """
         self.file_path = file_path
+        self.since = since
         self._data = None
 
     def _load(self):
@@ -211,15 +218,29 @@ class HealthDataParser:
             with open(self.file_path, "r") as f:
                 self._data = json.load(f)
 
-    def get_metrics(self) -> Iterator[HealthMetricSample]:
-        """Iterate over all health metrics"""
-        self._load()
-        yield from parse_metrics(self._data)
+    def get_metrics(self, since: Optional[datetime] = None) -> Iterator[HealthMetricSample]:
+        """Iterate over all health metrics
 
-    def get_workouts(self) -> Iterator[Workout]:
-        """Iterate over all workouts"""
+        Args:
+            since: Override the instance-level since filter for this call
+        """
         self._load()
-        yield from parse_workouts(self._data)
+        cutoff = since or self.since
+        for sample in parse_metrics(self._data):
+            if cutoff is None or sample.timestamp > cutoff:
+                yield sample
+
+    def get_workouts(self, since: Optional[datetime] = None) -> Iterator[Workout]:
+        """Iterate over all workouts
+
+        Args:
+            since: Override the instance-level since filter for this call
+        """
+        self._load()
+        cutoff = since or self.since
+        for workout in parse_workouts(self._data):
+            if cutoff is None or workout.start_time > cutoff:
+                yield workout
 
     def get_metric_names(self) -> list[str]:
         """Get list of available metric names"""

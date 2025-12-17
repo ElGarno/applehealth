@@ -324,6 +324,67 @@ class HealthInfluxClient:
                 return record.get_time()
         return None
 
+    def get_last_import_times(self) -> dict[str, Optional[datetime]]:
+        """Get the last import timestamps for all measurement types
+
+        Returns:
+            Dictionary with keys 'raw', 'hourly', 'daily', 'workouts'
+        """
+        measurements = {
+            "raw": "health_metrics",
+            "hourly": "health_metrics_hourly",
+            "daily": "health_metrics_daily",
+            "workouts": "workouts",
+        }
+
+        results = {}
+        for key, measurement in measurements.items():
+            query = f'''
+            from(bucket: "{self.config.bucket}")
+                |> range(start: -3650d)
+                |> filter(fn: (r) => r._measurement == "{measurement}")
+                |> group()
+                |> last()
+            '''
+            try:
+                result = self._query_api.query(query, org=self._org_id)
+                timestamp = None
+                for table in result:
+                    for record in table.records:
+                        t = record.get_time()
+                        if timestamp is None or t > timestamp:
+                            timestamp = t
+                results[key] = timestamp
+            except Exception as e:
+                logger.warning(f"Could not get last import time for {measurement}: {e}")
+                results[key] = None
+
+        return results
+
+    def delete_data_after(self, timestamp: datetime, measurement: str = None):
+        """Delete data after a specific timestamp
+
+        Used for incremental imports to remove overlapping aggregates.
+        """
+        delete_api = self._client.delete_api()
+
+        # Convert datetime to RFC3339 format
+        start = timestamp.isoformat().replace("+00:00", "Z")
+        stop = "2100-01-01T00:00:00Z"  # Far future
+
+        predicate = ""
+        if measurement:
+            predicate = f'_measurement="{measurement}"'
+
+        delete_api.delete(
+            start=start,
+            stop=stop,
+            predicate=predicate,
+            bucket=self.config.bucket,
+            org=self._org_id,
+        )
+        logger.info(f"Deleted {measurement or 'all'} data after {timestamp}")
+
     def delete_data(self, start: str, stop: str, measurement: str = None):
         """Delete data in a time range
 

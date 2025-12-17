@@ -46,7 +46,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
-          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workouts\")\n  |> filter(fn: (r) => r._field == \"duration\")\n  |> count()",
+          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workouts\")\n  |> filter(fn: (r) => r._field == \"duration\")\n  |> group()\n  |> count()",
           "refId": "A"
         }
       ],
@@ -92,7 +92,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
-          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workouts\")\n  |> filter(fn: (r) => r._field == \"duration\")\n  |> sum()",
+          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workouts\")\n  |> filter(fn: (r) => r._field == \"duration\")\n  |> group()\n  |> sum()",
           "refId": "A"
         }
       ],
@@ -138,7 +138,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
-          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workouts\")\n  |> filter(fn: (r) => r._field == \"distance\")\n  |> sum()",
+          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workouts\")\n  |> filter(fn: (r) => r._field == \"distance\")\n  |> group()\n  |> sum()",
           "refId": "A"
         }
       ],
@@ -184,7 +184,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
-          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workouts\")\n  |> filter(fn: (r) => r._field == \"active_energy\")\n  |> sum()\n  |> map(fn: (r) => ({ r with _value: r._value / 4.184 }))",
+          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workouts\")\n  |> filter(fn: (r) => r._field == \"active_energy\")\n  |> group()\n  |> sum()\n  |> map(fn: (r) => ({ r with _value: r._value / 4.184 }))",
           "refId": "A"
         }
       ],
@@ -235,7 +235,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
-          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workouts\")\n  |> filter(fn: (r) => r._field == \"duration\")\n  |> group(columns: [\"name\"])\n  |> count()",
+          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workouts\")\n  |> filter(fn: (r) => r._field == \"duration\")\n  |> group(columns: [\"name\"])\n  |> count()\n  |> keep(columns: [\"name\", \"_value\"])",
           "refId": "A"
         }
       ],
@@ -289,7 +289,7 @@
       "targets": [
         {
           "datasource": { "type": "influxdb", "uid": "af6pid1r7xp1cf" },
-          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workouts\")\n  |> filter(fn: (r) => r._field == \"duration\")\n  |> map(fn: (r) => ({ r with _value: r._value / 60.0 }))",
+          "query": "from(bucket: \"apple_health\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"workouts\")\n  |> filter(fn: (r) => r._field == \"duration\")\n  |> map(fn: (r) => ({ _time: r._time, _value: r._value / 60.0, _field: r.name }))",
           "refId": "A"
         }
       ],
@@ -349,6 +349,22 @@
               { "id": "displayName", "value": "Distance" },
               { "id": "unit", "value": "km" },
               { "id": "decimals", "value": 2 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "active_energy" },
+            "properties": [
+              { "id": "displayName", "value": "Energy" },
+              { "id": "unit", "value": "kJ" },
+              { "id": "decimals", "value": 0 }
+            ]
+          },
+          {
+            "matcher": { "id": "byRegexp", "options": "active_energy.*" },
+            "properties": [
+              { "id": "displayName", "value": "Energy" },
+              { "id": "unit", "value": "kJ" },
+              { "id": "decimals", "value": 0 }
             ]
           },
           {
