@@ -56,14 +56,14 @@ def run_import(file_path: Path, incremental: bool = True):
                 logger.error("Cannot connect to InfluxDB")
                 return False
 
-            # Get last import time for incremental mode
+            # Get last import time for incremental mode (metrics only)
             since_timestamp = None
             if incremental:
                 last_times = client.get_last_import_times()
                 since_timestamp = last_times.get("raw")
 
                 if since_timestamp:
-                    logger.info(f"Incremental mode: last import was at {since_timestamp}")
+                    logger.info(f"Incremental mode: last metric import was at {since_timestamp}")
                     # Delete overlapping aggregates
                     cutoff_hour = since_timestamp.replace(minute=0, second=0, microsecond=0)
                     client.delete_data_after(cutoff_hour, "health_metrics_hourly")
@@ -71,15 +71,16 @@ def run_import(file_path: Path, incremental: bool = True):
                     cutoff_day = since_timestamp.replace(hour=0, minute=0, second=0, microsecond=0)
                     client.delete_data_after(cutoff_day, "health_metrics_daily")
 
-            # Parse and import
+            # Parse file - metrics are filtered by since_timestamp, workouts are NOT filtered
+            # (workouts use their own deduplication via workout_id + start_time)
             parser = HealthDataParser(file_path, since=since_timestamp)
             summary = parser.get_summary()
-            logger.info(f"Found {summary['total_metric_samples']:,} samples, {summary['total_workouts']} workouts")
+            logger.info(f"Found {summary['total_metric_samples']:,} samples, {summary['total_workouts']} workouts in file")
 
             # Initialize aggregator
             aggregator = StreamingAggregator()
 
-            # Process metrics
+            # Process metrics (filtered by since_timestamp)
             count = 0
             for sample in parser.get_metrics():
                 aggregator.add_sample(sample)
@@ -103,9 +104,10 @@ def run_import(file_path: Path, incremental: bool = True):
             )
             logger.info(f"Wrote {daily_count:,} daily aggregates")
 
-            # Process workouts
+            # Process workouts - NO filtering, InfluxDB deduplicates by workout_id + timestamp
             workout_count = 0
-            for workout in parser.get_workouts():
+            workouts_parser = HealthDataParser(file_path)  # Fresh parser without since filter
+            for workout in workouts_parser.get_workouts():
                 client.write_workout(workout)
                 workout_count += 1
 
