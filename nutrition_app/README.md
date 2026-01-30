@@ -48,7 +48,7 @@ cp .env.template .env
 docker-compose up -d
 ```
 
-3. App öffnen: http://NAS-IP:8501
+3. App öffnen: http://NAS-IP:8502
 
 ## Konfiguration
 
@@ -57,7 +57,7 @@ docker-compose up -d
 | Variable | Beschreibung | Default |
 |----------|--------------|---------|
 | `POSTGRES_HOST` | PostgreSQL Server | localhost |
-| `POSTGRES_PORT` | PostgreSQL Port | 5432 |
+| `POSTGRES_PORT` | PostgreSQL Port | 5433 |
 | `POSTGRES_DB` | Datenbank-Name | nutrition_app |
 | `POSTGRES_USER` | DB Benutzer | postgres |
 | `POSTGRES_PASSWORD` | DB Passwort | - |
