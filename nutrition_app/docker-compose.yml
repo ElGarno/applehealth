@@ -28,18 +28,7 @@ services:
     ports:
       - "8502:8501"
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    networks:
-      - nutrition_network
-    # Optional: Persistent Volumes
-    # volumes:
-    #   - /volume1/docker/nutrition_app/data:/app/data
 
 networks:
-  nutrition_network:
+  default:
     driver: bridge
