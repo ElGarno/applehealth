@@ -21,7 +21,7 @@ class DatabaseService:
     def __init__(self, connection_string: str):
         self.engine = create_engine(connection_string)
         Base.metadata.create_all(self.engine)
-        self.SessionLocal = sessionmaker(bind=self.engine)
+        self.SessionLocal = sessionmaker(bind=self.engine, expire_on_commit=False)
 
     @contextmanager
     def get_session(self):
@@ -36,6 +36,20 @@ class DatabaseService:
         finally:
             session.close()
 
+    def _detach(self, session, obj):
+        """Detach object from session for use outside context"""
+        if obj is not None:
+            session.refresh(obj)
+            session.expunge(obj)
+        return obj
+
+    def _detach_all(self, session, objects):
+        """Detach list of objects from session"""
+        for obj in objects:
+            session.refresh(obj)
+            session.expunge(obj)
+        return objects
+
     # ==================== User Profile ====================
 
     def get_or_create_user(self, name: str = "Benutzer") -> UserProfile:
@@ -47,7 +61,7 @@ class DatabaseService:
                 session.add(user)
                 session.commit()
                 session.refresh(user)
-            return user
+            return self._detach(session, user)
 
     def update_user_profile(self, user_id: int, **kwargs) -> UserProfile:
         """Aktualisiert Benutzerprofil"""
@@ -59,12 +73,13 @@ class DatabaseService:
                         setattr(user, key, value)
                 session.commit()
                 session.refresh(user)
-            return user
+            return self._detach(session, user)
 
     def get_user(self, user_id: int = 1) -> Optional[UserProfile]:
         """Holt Benutzerprofil"""
         with self.get_session() as session:
-            return session.query(UserProfile).filter_by(id=user_id).first()
+            user = session.query(UserProfile).filter_by(id=user_id).first()
+            return self._detach(session, user)
 
     # ==================== Goals ====================
 
@@ -97,14 +112,15 @@ class DatabaseService:
             session.add(goal)
             session.commit()
             session.refresh(goal)
-            return goal
+            return self._detach(session, goal)
 
     def get_active_goal(self, user_id: int) -> Optional[UserGoal]:
         """Holt das aktive Ziel des Benutzers"""
         with self.get_session() as session:
-            return session.query(UserGoal).filter_by(
+            goal = session.query(UserGoal).filter_by(
                 user_id=user_id, is_active=True
             ).first()
+            return self._detach(session, goal)
 
     # ==================== Body Measurements ====================
 
@@ -131,23 +147,25 @@ class DatabaseService:
             session.add(measurement)
             session.commit()
             session.refresh(measurement)
-            return measurement
+            return self._detach(session, measurement)
 
     def get_body_measurements(self, user_id: int, days: int = 30) -> List[BodyMeasurement]:
         """Holt Körpermessungen der letzten X Tage"""
         with self.get_session() as session:
             since = datetime.now() - timedelta(days=days)
-            return session.query(BodyMeasurement).filter(
+            measurements = session.query(BodyMeasurement).filter(
                 BodyMeasurement.user_id == user_id,
                 BodyMeasurement.measured_at >= since
             ).order_by(desc(BodyMeasurement.measured_at)).all()
+            return self._detach_all(session, measurements)
 
     def get_latest_measurement(self, user_id: int) -> Optional[BodyMeasurement]:
         """Holt die letzte Körpermessung"""
         with self.get_session() as session:
-            return session.query(BodyMeasurement).filter_by(
+            measurement = session.query(BodyMeasurement).filter_by(
                 user_id=user_id
             ).order_by(desc(BodyMeasurement.measured_at)).first()
+            return self._detach(session, measurement)
 
     # ==================== Foods ====================
 
@@ -166,19 +184,21 @@ class DatabaseService:
             session.add(food)
             session.commit()
             session.refresh(food)
-            return food
+            return self._detach(session, food)
 
     def search_foods(self, query: str, limit: int = 20) -> List[Food]:
         """Sucht Lebensmittel nach Name"""
         with self.get_session() as session:
-            return session.query(Food).filter(
+            foods = session.query(Food).filter(
                 Food.name.ilike(f"%{query}%")
             ).limit(limit).all()
+            return self._detach_all(session, foods)
 
     def get_food_by_barcode(self, barcode: str) -> Optional[Food]:
         """Holt Lebensmittel nach Barcode"""
         with self.get_session() as session:
-            return session.query(Food).filter_by(barcode=barcode).first()
+            food = session.query(Food).filter_by(barcode=barcode).first()
+            return self._detach(session, food)
 
     def get_frequently_used_foods(self, user_id: int, limit: int = 10) -> List[Food]:
         """Holt häufig verwendete Lebensmittel"""
@@ -190,9 +210,10 @@ class DatabaseService:
                 Meal.user_id == user_id
             ).group_by(MealItem.food_id).subquery()
 
-            return session.query(Food).join(
+            foods = session.query(Food).join(
                 subquery, Food.id == subquery.c.food_id
             ).order_by(desc(subquery.c.usage_count)).limit(limit).all()
+            return self._detach_all(session, foods)
 
     # ==================== Meals ====================
 
@@ -212,7 +233,7 @@ class DatabaseService:
             session.add(meal)
             session.commit()
             session.refresh(meal)
-            return meal
+            return self._detach(session, meal)
 
     def add_item_to_meal(self, meal_id: int, food_id: int, quantity_g: float) -> MealItem:
         """Fügt ein Lebensmittel zu einer Mahlzeit hinzu"""
@@ -243,26 +264,28 @@ class DatabaseService:
 
             session.commit()
             session.refresh(item)
-            return item
+            return self._detach(session, item)
 
     def get_meals_for_date(self, user_id: int, target_date: date) -> List[Meal]:
         """Holt alle Mahlzeiten für ein Datum"""
         with self.get_session() as session:
             start = datetime.combine(target_date, datetime.min.time())
             end = datetime.combine(target_date, datetime.max.time())
-            return session.query(Meal).filter(
+            meals = session.query(Meal).filter(
                 Meal.user_id == user_id,
                 Meal.eaten_at >= start,
                 Meal.eaten_at <= end,
                 Meal.is_template == False
             ).order_by(Meal.eaten_at).all()
+            return self._detach_all(session, meals)
 
     def get_meal_templates(self, user_id: int) -> List[Meal]:
         """Holt gespeicherte Mahlzeiten-Vorlagen"""
         with self.get_session() as session:
-            return session.query(Meal).filter_by(
+            meals = session.query(Meal).filter_by(
                 user_id=user_id, is_template=True
             ).all()
+            return self._detach_all(session, meals)
 
     def get_daily_nutrition_summary(self, user_id: int, target_date: date) -> dict:
         """Berechnet Tagesübersicht der Nährwerte"""
@@ -307,20 +330,22 @@ class DatabaseService:
             session.add(pref)
             session.commit()
             session.refresh(pref)
-            return pref
+            return self._detach(session, pref)
 
     def get_user_preferences(self, user_id: int) -> List[FoodPreference]:
         """Holt alle Vorlieben eines Benutzers"""
         with self.get_session() as session:
-            return session.query(FoodPreference).filter_by(user_id=user_id).all()
+            prefs = session.query(FoodPreference).filter_by(user_id=user_id).all()
+            return self._detach_all(session, prefs)
 
     def get_preferences_by_type(self, user_id: int,
                                 pref_type: PreferenceType) -> List[FoodPreference]:
         """Holt Vorlieben nach Typ"""
         with self.get_session() as session:
-            return session.query(FoodPreference).filter_by(
+            prefs = session.query(FoodPreference).filter_by(
                 user_id=user_id, preference_type=pref_type
             ).all()
+            return self._detach_all(session, prefs)
 
     def delete_preference(self, preference_id: int) -> bool:
         """Löscht eine Vorliebe"""
@@ -344,7 +369,7 @@ class DatabaseService:
             if existing:
                 existing.is_active = True
                 session.commit()
-                return existing
+                return self._detach(session, existing)
 
             restriction = DietaryRestriction(
                 user_id=user_id,
@@ -353,14 +378,15 @@ class DatabaseService:
             session.add(restriction)
             session.commit()
             session.refresh(restriction)
-            return restriction
+            return self._detach(session, restriction)
 
     def get_dietary_restrictions(self, user_id: int) -> List[DietaryRestriction]:
         """Holt aktive Ernährungseinschränkungen"""
         with self.get_session() as session:
-            return session.query(DietaryRestriction).filter_by(
+            restrictions = session.query(DietaryRestriction).filter_by(
                 user_id=user_id, is_active=True
             ).all()
+            return self._detach_all(session, restrictions)
 
     # ==================== Feedback ====================
 
@@ -382,7 +408,7 @@ class DatabaseService:
             session.add(feedback)
             session.commit()
             session.refresh(feedback)
-            return feedback
+            return self._detach(session, feedback)
 
     # ==================== AI Recommendations ====================
 
@@ -399,13 +425,14 @@ class DatabaseService:
             session.add(rec)
             session.commit()
             session.refresh(rec)
-            return rec
+            return self._detach(session, rec)
 
     def get_recent_recommendations(self, user_id: int, days: int = 7) -> List[AIRecommendation]:
         """Holt die letzten Empfehlungen"""
         with self.get_session() as session:
             since = date.today() - timedelta(days=days)
-            return session.query(AIRecommendation).filter(
+            recs = session.query(AIRecommendation).filter(
                 AIRecommendation.user_id == user_id,
                 AIRecommendation.recommendation_date >= since
             ).order_by(desc(AIRecommendation.created_at)).all()
+            return self._detach_all(session, recs)
