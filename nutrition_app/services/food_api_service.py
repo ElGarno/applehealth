@@ -45,7 +45,10 @@ class FoodAPIService:
     PRODUCT_URL = f"{BASE_URL}/api/v2/product"
 
     def __init__(self):
-        self.client = httpx.Client(timeout=30.0)
+        self.client = httpx.Client(
+            timeout=30.0,
+            headers={"User-Agent": "NutritionTracker/1.0 (contact@faffi.cloud)"}
+        )
 
     def __del__(self):
         self.client.close()
